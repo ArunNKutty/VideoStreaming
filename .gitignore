@@ -1,0 +1,47 @@
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Uploads and videos (optional - comment out if you want to track them)
+# uploads/
+# videos/
+
+# Database
+*.db
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Node modules (for frontend)
+node_modules/
+react-hls-player/node_modules/.cache/
+
+# Build artifacts
+build/
+dist/
+
+# Logs
+logs/
+*.log

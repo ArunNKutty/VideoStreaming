@@ -48,6 +48,11 @@ class Settings(BaseSettings):
     
     # Logging
     LOG_LEVEL: str = "INFO"
+
+    # Email settings (Resend)
+    RESEND_API_KEY: str = "your-resend-api-key"
+    FROM_EMAIL: str = "noreply@yourdomain.com"
+    FROM_NAME: str = "Video Platform"
     
     class Config:
         env_file = ".env"
