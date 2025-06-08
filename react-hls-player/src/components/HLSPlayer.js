@@ -12,8 +12,8 @@ const HLSPlayer = () => {
   
   const videoRef = useRef(null);
 
-  // Sample HLS URL for testing
-  const sampleUrl = 'http://localhost:8080/hls/sample-id/index.m3u8';
+  // Sample HLS URL for testing (updated for new API structure)
+  const sampleUrl = 'http://localhost:8080/api/v1/videos/a0692aec-f0f2-4922-86b0-cac1790548b6/hls/index.m3u8';
 
   useEffect(() => {
     // Cleanup HLS instance on component unmount
