@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     STATIC_DIR: str = "static"
     
     # File upload settings
-    MAX_FILE_SIZE: int = 1024 * 1024 * 1024  # 1GB
+    MAX_FILE_SIZE: int = 1024 * 1024 * 1024
     ALLOWED_VIDEO_EXTENSIONS: List[str] = [".mp4", ".avi", ".mov", ".mkv", ".webm", ".flv"]
     ALLOWED_MIME_TYPES: List[str] = [
         "video/mp4", "video/avi", "video/quicktime", 
@@ -48,11 +48,6 @@ class Settings(BaseSettings):
     
     # Logging
     LOG_LEVEL: str = "INFO"
-
-    # Email settings (Resend)
-    RESEND_API_KEY: str = "your-resend-api-key"
-    FROM_EMAIL: str = "noreply@yourdomain.com"
-    FROM_NAME: str = "Video Platform"
     
     class Config:
         env_file = ".env"

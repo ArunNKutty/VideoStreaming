@@ -1,34 +1,25 @@
-# 🎬 Video Platform with Email Scheduler
+# 🎬 HLS Video Streaming Platform
 
-A comprehensive video infrastructure platform similar to Mux.com, featuring HLS video streaming and automated email scheduling capabilities.
+A comprehensive video infrastructure platform similar to Mux.com, featuring HLS video streaming with upload and playback capabilities.
 
 ## 🚀 Features
 
 ### Video Infrastructure
 - **HLS Video Streaming**: Efficient video streaming using HLS protocol
-- **Multiple Video Players**: HLS.js integration with adaptive bitrate streaming
+- **Video Player**: HLS.js integration with adaptive bitrate streaming
 - **Video Upload & Processing**: Support for video file uploads and HLS conversion
 - **FastAPI Backend**: High-performance Python server with automatic API documentation
-
-### Email Scheduling System
-- **Automated Email Delivery**: Schedule video emails using Resend service
-- **Multiple Email Templates**: Standard, Premium, and Minimal designs
-- **Flexible Scheduling**: Once, Daily, Weekly, Monthly, or Custom frequencies
-- **Calendar Interface**: Visual scheduling with FullCalendar.js
-- **Background Processing**: APScheduler for automated email delivery
 
 ### Frontend
 - **TypeScript React App**: Modern, type-safe frontend application
 - **Responsive Design**: Mobile-friendly interface
-- **Real-time Statistics**: Dashboard with analytics and metrics
-- **Interactive Calendar**: Drag-and-drop scheduling interface
+- **Video Player Interface**: Clean and intuitive video playback experience
 
 ## 📋 Prerequisites
 
 - **Python 3.8+** with pip
 - **Node.js** (v16 or higher) and **npm**
 - **FFmpeg** (for video processing)
-- **Resend Account** (for email functionality)
 - **Docker** (optional, for containerized deployment)
 
 ## 🚀 Quick Start
@@ -44,9 +35,8 @@ cd VideoStreaming
 # Install Python dependencies
 pip install -r requirements.txt
 
-# Set up environment variables
+# Set up environment variables (optional)
 cp .env.example .env
-# Edit .env with your Resend API key and other settings
 
 # Start the FastAPI server
 python main.py
@@ -68,45 +58,8 @@ npm start
 - **React App**: http://localhost:3000
 - **API Server**: http://localhost:8080
 - **API Documentation**: http://localhost:8080/docs
-- **Calendar Interface**: http://localhost:8080/api/v1/calendar
 
-## 📧 Email Scheduler Setup
 
-### 1. Get Resend API Key
-1. Sign up at [resend.com](https://resend.com)
-2. Create an API key
-3. Verify your sending domain
-
-### 2. Configure Environment
-```bash
-# Update .env file
-RESEND_API_KEY=re_your_api_key_here
-FROM_EMAIL=noreply@yourdomain.com
-FROM_NAME=Video Platform
-```
-
-### 3. Using the Scheduler
-1. **Via React Interface**:
-   - Go to http://localhost:3000
-   - Click "Email Scheduler" tab
-   - Create new schedules with the form
-
-2. **Via Calendar Interface**:
-   - Visit http://localhost:8080/api/v1/calendar
-   - Visual calendar with drag-and-drop
-
-3. **Via API**:
-   ```bash
-   curl -X POST "http://localhost:8080/api/v1/schedules" \
-     -H "Content-Type: application/json" \
-     -d '{
-       "video_id": "your-video-id",
-       "recipient_email": "user@example.com",
-       "scheduled_date": "2024-12-25T10:00:00",
-       "subject": "Your video is ready!",
-       "template": "premium"
-     }'
-   ```
 
 ## 📁 Project Structure
 
@@ -115,7 +68,6 @@ VideoStreaming/
 ├── main.py                    # FastAPI server entry point
 ├── requirements.txt           # Python dependencies
 ├── .env.example              # Environment variables template
-├── EMAIL_SCHEDULER_SETUP.md  # Detailed scheduler setup guide
 ├── app/                      # Backend application
 │   ├── __init__.py
 │   ├── main.py              # FastAPI app configuration
@@ -124,17 +76,13 @@ VideoStreaming/
 │   │   └── __init__.py
 │   ├── models/              # Pydantic models
 │   │   ├── video.py         # Video-related models
-│   │   ├── scheduler.py     # Scheduler models
 │   │   └── __init__.py
 │   ├── services/            # Business logic
 │   │   ├── video_service.py # Video processing
-│   │   ├── email_service.py # Email functionality
-│   │   ├── scheduler_service.py # Scheduling logic
 │   │   └── __init__.py
 │   └── api/                 # API routes
 │       ├── routes/
 │       │   ├── video.py     # Video endpoints
-│       │   ├── scheduler.py # Scheduler endpoints
 │       │   ├── health.py    # Health check
 │       │   └── __init__.py
 │       └── __init__.py
@@ -148,7 +96,6 @@ VideoStreaming/
     │   ├── index.tsx        # Entry point
     │   ├── components/      # React components
     │   │   ├── HLSPlayer.tsx      # Video player
-    │   │   ├── VideoScheduler.tsx # Email scheduler
     │   │   └── *.css        # Component styles
     │   └── types/           # TypeScript definitions
     │       ├── api.ts       # API response types
@@ -174,18 +121,11 @@ VideoStreaming/
 - `GET /api/v1/videos/{video_id}/hls` - HLS playlist
 - `GET /api/v1/videos/{video_id}/thumbnail` - Video thumbnail
 
-### Email Scheduler Endpoints
-- `POST /api/v1/schedules` - Create new schedule
-- `GET /api/v1/schedules` - List all schedules
-- `GET /api/v1/schedules/{id}` - Get specific schedule
-- `PUT /api/v1/schedules/{id}` - Update schedule
-- `DELETE /api/v1/schedules/{id}` - Delete schedule
-- `GET /api/v1/calendar` - Calendar interface
-- `GET /api/v1/calendar/events` - Calendar events
+
 
 ## 🎥 Using the Video Player
 
-1. **Start both servers** (backend on :8000, frontend on :3000)
+1. **Start both servers** (backend on :8080, frontend on :3000)
 2. **Open the React app** at http://localhost:3000
 3. **Enter a video ID** that exists in the `/videos/` directory
 4. **Click play** to start streaming
