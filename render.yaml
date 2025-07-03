@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: hls-video-server
+    runtime: docker
+    plan: starter  # or standard/pro based on your needs
+    
+    # Build configuration
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    
+    # Environment variables
+    envVars:
+      - key: AWS_ACCESS_KEY_ID
+        sync: false  # Set this in Render dashboard
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false  # Set this in Render dashboard
+      - key: AWS_REGION
+        value: us-east-2
+      - key: S3_BUCKET_NAME
+        value: cogito-videos
+      - key: DEBUG
+        value: "false"
+      - key: PERSISTENT_HLS_DIR
+        value: /opt/render/project/src/persistent/hls
+      - key: PERSISTENT_VIDEOS_DIR
+        value: /opt/render/project/src/persistent/videos
+    
+    # Persistent disk configuration
+    disk:
+      name: hls-storage
+      mountPath: /opt/render/project/src/persistent
+      sizeGB: 10  # Adjust size based on your needs (10GB, 20GB, etc.)
+    
+    # Health check
+    healthCheckPath: /health
+    
+    # Auto-deploy on git push
+    autoDeploy: true
+
+# Optional: Background worker for video processing (if needed)
+# - type: worker
+#   name: video-processor
+#   runtime: docker
+#   dockerfilePath: ./Dockerfile
+#   dockerContext: .
+#   startCommand: python -m app.workers.video_processor

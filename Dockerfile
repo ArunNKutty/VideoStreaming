@@ -17,8 +17,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create directories for video storage
-RUN mkdir -p videos static
+# Create directories for video storage and persistent volumes
+RUN mkdir -p videos static uploads /app/persistent/videos /app/persistent/hls
 
 # Expose port
 EXPOSE 8080
@@ -27,5 +27,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=10 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-# Run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"] 
+# Run the application (Render uses PORT env variable)
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}"]
