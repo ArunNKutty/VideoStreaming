@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 from app.core.config import settings
-from app.api.routes import video, health
+from app.api.routes import video, health, auth
 from app.core.exceptions import add_exception_handlers
 
 
@@ -43,6 +43,11 @@ def create_app() -> FastAPI:
 
     # Include routers
     app.include_router(health.router, prefix=settings.API_V1_STR)
+    app.include_router(auth.router, prefix=settings.API_V1_STR)
     app.include_router(video.router, prefix=settings.API_V1_STR)
 
     return app
+
+
+# Create the app instance
+app = create_app()
