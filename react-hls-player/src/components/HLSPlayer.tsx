@@ -12,8 +12,8 @@ const HLSPlayer: React.FC = () => {
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Sample HLS URL for testing (updated for new API structure)
-  const sampleUrl = 'http://localhost:8080/api/v1/videos/f4948ee7-75e0-4aac-89ee-50b02727212f/hls/index.m3u8';
+  // Sample HLS URL for testing (using latest video)
+  const sampleUrl = 'http://localhost:8080/api/v1/videos/f789273e-8b51-46b3-b122-95e66c878020/hls/index.m3u8';
 
   useEffect(() => {
     // Cleanup HLS instance on component unmount

@@ -30,10 +30,10 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Create directories
-    Path(settings.VIDEOS_DIR).mkdir(exist_ok=True)
+    # Create temporary directories (for processing only)
     Path(settings.UPLOAD_DIR).mkdir(exist_ok=True)
     Path("static").mkdir(exist_ok=True)
+    # Note: VIDEOS_DIR created temporarily during processing, then cleaned up
 
     # Mount static files
     app.mount("/static", StaticFiles(directory="static"), name="static")

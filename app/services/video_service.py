@@ -7,13 +7,13 @@ import subprocess
 import shutil
 import json
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import logging
 
 from app.core.config import settings
-from app.core.exceptions import VideoProcessingError, FileUploadError
+from app.core.exceptions import FileUploadError
 from app.models.video import VideoAsset, VideoStatus, VideoInfo
 from app.services.s3_service import s3_service
 
@@ -87,23 +87,34 @@ class VideoService:
             success = await self._convert_to_hls(input_path, str(output_dir))
 
             if success:
-                # Try to upload HLS files to S3, but don't fail if it doesn't work
+                # Upload HLS files to S3 (required - no local storage)
                 try:
                     uploaded_files = await s3_service.upload_hls_files(video_id, str(output_dir))
                     if uploaded_files:
                         logger.info(f"Uploaded {len(uploaded_files)} HLS files to S3 for video {video_id}")
-                        # Clean up local files after successful upload
-                        shutil.rmtree(output_dir, ignore_errors=True)
-                        logger.info(f"Video processing completed for {video_id} (S3 storage)")
-                    else:
-                        logger.warning(f"S3 upload failed for {video_id}, keeping local files")
-                        logger.info(f"Video processing completed for {video_id} (local storage)")
 
-                    self._update_asset_status(video_id, VideoStatus.READY, video_info)
+                        # Clean up local HLS files after successful S3 upload
+                        if output_dir.exists():
+                            shutil.rmtree(output_dir)
+                            logger.info(f"Cleaned up local HLS files for {video_id}")
+
+                        logger.info(f"Video processing completed for {video_id} (S3 only)")
+                        self._update_asset_status(video_id, VideoStatus.READY, video_info)
+                    else:
+                        logger.error(f"S3 upload failed for {video_id} - no local storage fallback")
+                        self._update_asset_status(video_id, VideoStatus.FAILED, error="S3 upload failed")
+
+                        # Clean up local files on failure
+                        if output_dir.exists():
+                            shutil.rmtree(output_dir)
+
                 except Exception as s3_error:
-                    logger.warning(f"S3 upload failed: {s3_error}. Using local storage instead.")
-                    logger.info(f"Video processing completed for {video_id} (local storage fallback)")
-                    self._update_asset_status(video_id, VideoStatus.READY, video_info)
+                    logger.error(f"S3 upload failed: {s3_error}. No local storage fallback available.")
+                    self._update_asset_status(video_id, VideoStatus.FAILED, error=f"S3 upload failed: {s3_error}")
+
+                    # Clean up local files on failure
+                    if output_dir.exists():
+                        shutil.rmtree(output_dir)
             else:
                 logger.error(f"Video processing failed for {video_id}")
                 self._update_asset_status(video_id, VideoStatus.FAILED, error="Conversion failed")
@@ -221,32 +232,28 @@ class VideoService:
         logger.info(f"Asset {video_id} status updated to {status}")
         if error:
             logger.error(f"Asset {video_id} error: {error}")
+        if info:
+            logger.info(f"Asset {video_id} info: duration={info.duration}s, {info.width}x{info.height}")
     
     def get_video_asset(self, video_id: str) -> Optional[VideoAsset]:
         """Get video asset by ID"""
-        # Check if HLS playlist exists in S3 first
+        # Check if HLS playlist exists in S3
         s3_playlist_exists = s3_service.check_file_exists(video_id, "index.m3u8")
-
-        # Check if local HLS playlist exists
-        video_dir = Path(settings.VIDEOS_DIR) / video_id
-        local_playlist_path = video_dir / "index.m3u8"
-        local_playlist_exists = local_playlist_path.exists()
 
         if s3_playlist_exists:
             # Video is ready in S3
             status = VideoStatus.READY
             hls_url = s3_service.get_hls_url(video_id)
-        elif local_playlist_exists:
-            # Video is ready locally
-            status = VideoStatus.READY
-            hls_url = f"/api/v1/videos/{video_id}/hls/index.m3u8"
-        elif video_dir.exists():
-            # Processing is still ongoing
-            status = VideoStatus.PROCESSING
-            hls_url = None
         else:
-            # Video not found
-            return None
+            # Check if processing directory exists (temporary processing)
+            video_dir = Path(settings.VIDEOS_DIR) / video_id
+            if video_dir.exists():
+                # Processing is still ongoing
+                status = VideoStatus.PROCESSING
+                hls_url = None
+            else:
+                # Video not found
+                return None
 
         return VideoAsset(
             id=video_id,
@@ -264,9 +271,9 @@ class VideoService:
         return None
 
     def get_hls_file_path(self, video_id: str, filename: str) -> Optional[Path]:
-        """Get local path for HLS file (fallback for local storage)"""
-        file_path = Path(settings.VIDEOS_DIR) / video_id / filename
-        return file_path if file_path.exists() else None
+        """Local storage disabled - always returns None"""
+        # Parameters kept for API compatibility but not used
+        return None
 
 
 # Global service instance

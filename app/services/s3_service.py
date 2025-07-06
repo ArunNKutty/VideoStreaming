@@ -1,10 +1,9 @@
 """
 AWS S3 service for video storage and streaming
 """
-import os
 import boto3
 import logging
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict
 from pathlib import Path
 from botocore.exceptions import ClientError, NoCredentialsError
 from botocore.config import Config
@@ -12,10 +11,6 @@ from botocore.config import Config
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
-
-# Persistent volume paths (Render disk mount or local for development)
-DOCKER_VIDEOS_DIR = os.getenv("PERSISTENT_VIDEOS_DIR", "./persistent/videos")
-DOCKER_HLS_DIR = os.getenv("PERSISTENT_HLS_DIR", "./persistent/hls")
 
 
 class S3Service:
@@ -26,17 +21,6 @@ class S3Service:
         self.s3_client = None
         self.bucket_name = settings.S3_BUCKET_NAME
         self._initialized = False
-        self._ensure_persistent_directories()
-
-    def _ensure_persistent_directories(self):
-        """Ensure persistent directories exist for Docker volume mapping"""
-        try:
-            # Create persistent directories
-            Path(DOCKER_VIDEOS_DIR).mkdir(parents=True, exist_ok=True)
-            Path(DOCKER_HLS_DIR).mkdir(parents=True, exist_ok=True)
-            logger.info(f"Ensured persistent directories: {DOCKER_VIDEOS_DIR}, {DOCKER_HLS_DIR}")
-        except Exception as e:
-            logger.warning(f"Could not create persistent directories: {e}")
 
     def _initialize_client(self):
         """Initialize S3 client on first use"""
@@ -136,16 +120,13 @@ class S3Service:
             raise
     
     async def upload_hls_files(self, video_id: str, local_hls_dir: str) -> Dict[str, str]:
-        """Upload all HLS files (playlist and segments) to S3 and save to persistent directories"""
+        """Upload all HLS files (playlist and segments) to S3"""
         self._initialize_client()
-
-        # Always save to persistent directories for Docker volume mapping
-        persistent_results = await self._save_hls_to_persistent_dirs(video_id, local_hls_dir)
 
         # Try S3 upload if available
         if not self.s3_client:
-            logger.warning("S3 client not available. Files saved to persistent directories only.")
-            return persistent_results
+            logger.warning("S3 client not available. Files remain in local directory only.")
+            return {}
 
         try:
             uploaded_files = {}
@@ -174,41 +155,10 @@ class S3Service:
             return uploaded_files
 
         except Exception as e:
-            logger.error(f"Failed to upload HLS files to S3: {e}. Files available in persistent directories.")
-            return persistent_results
-
-    async def _save_hls_to_persistent_dirs(self, video_id: str, local_hls_dir: str) -> Dict[str, str]:
-        """Save HLS files to persistent directories for Docker volume mapping"""
-        try:
-            saved_files = {}
-            hls_path = Path(local_hls_dir)
-
-            if not hls_path.exists():
-                raise FileNotFoundError(f"HLS directory not found: {local_hls_dir}")
-
-            # Create video-specific directory in persistent storage
-            persistent_video_dir = Path(DOCKER_HLS_DIR) / video_id
-            persistent_video_dir.mkdir(parents=True, exist_ok=True)
-
-            # Copy all HLS files to persistent directory
-            for file_path in hls_path.iterdir():
-                if file_path.is_file():
-                    # Destination path in persistent storage
-                    dest_path = persistent_video_dir / file_path.name
-
-                    # Copy file content
-                    with open(file_path, 'rb') as src, open(dest_path, 'wb') as dst:
-                        dst.write(src.read())
-
-                    # Store local persistent path
-                    saved_files[file_path.name] = str(dest_path)
-
-            logger.info(f"Saved {len(saved_files)} HLS files for video {video_id} to persistent directory: {persistent_video_dir}")
-            return saved_files
-
-        except Exception as e:
-            logger.error(f"Failed to save HLS files to persistent directories: {e}")
+            logger.error(f"Failed to upload HLS files to S3: {e}. Files remain in local directory.")
             return {}
+
+
 
     def _get_content_type(self, file_extension: str) -> str:
         """Get content type based on file extension"""
@@ -272,18 +222,13 @@ class S3Service:
             except ClientError:
                 pass
 
-        # Check persistent directories
-        return self.check_persistent_file_exists(video_id, filename)
+        # No local storage - return False if S3 check fails
+        return False
 
-    def check_persistent_file_exists(self, video_id: str, filename: str) -> bool:
-        """Check if a file exists in persistent directories"""
-        persistent_file_path = Path(DOCKER_HLS_DIR) / video_id / filename
-        return persistent_file_path.exists()
-
-    def get_persistent_file_path(self, video_id: str, filename: str) -> Optional[Path]:
-        """Get path to file in persistent directories"""
-        persistent_file_path = Path(DOCKER_HLS_DIR) / video_id / filename
-        return persistent_file_path if persistent_file_path.exists() else None
+    def get_local_file_path(self, video_id: str, filename: str) -> Optional[Path]:
+        """Local storage disabled - always returns None"""
+        # Parameters kept for API compatibility but not used
+        return None
 
 
 # Global service instance

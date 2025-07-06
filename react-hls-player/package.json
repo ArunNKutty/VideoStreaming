@@ -1,7 +1,7 @@
 {
   "name": "video-platform-frontend",
   "version": "1.0.0",
-  "description": "TypeScript React frontend for video streaming platform with email scheduling",
+  "description": "TypeScript React frontend for HLS video streaming platform",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^6.1.4",
